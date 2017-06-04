@@ -201,26 +201,38 @@ class Gerrit(object):
     def getEvent(self):
         return self.event_queue.get()
 
-    def createGroup(self, group, visible_to_all=True, owner=None):
+    def createGroup(self, group, visible_to_all=True, owner=None, members=None, description=None):
         cmd = 'gerrit create-group'
         if visible_to_all:
             cmd = '%s --visible-to-all' % cmd
         if owner:
             cmd = '%s --owner %s' % (cmd, owner)
+        if description:
+            cmd = '%s --description "%s"' % (cmd, description)
+        if members:
+            members_list = ''
+            for member in members:
+                members_list += ' --member %s' % member
+            cmd = '%s%s' % (cmd, members_list)
         cmd = '%s "%s"' % (cmd, group)
         out, err = self._ssh(cmd)
         return err
 
     def createProject(self, project, require_change_id=True, empty_repo=False,
-                      description=None):
+                      description=None, is_parent=False, parent_project=None):
         cmd = 'gerrit create-project'
         if require_change_id:
             cmd = '%s --require-change-id' % cmd
         if empty_repo:
             cmd = '%s --empty-commit' % cmd
         if description:
-            cmd = "%s --description \"%s\"" % \
+            cmd = '%s --description "%s"' % \
                   (cmd, description.replace('"', r'\"'))
+        if parent_project:
+            cmd = '%s --parent "%s"' % \
+                  (cmd, parent_project)
+        if is_parent:
+            cmd = '%s --permissions-only' % cmd
         cmd = '%s "%s"' % (cmd, project)
         out, err = self._ssh(cmd)
         return err
