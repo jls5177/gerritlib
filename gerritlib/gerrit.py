@@ -359,13 +359,16 @@ class Gerrit(object):
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.WarningPolicy())
-        client.connect(self.hostname,
-                       username=self.username,
-                       port=self.port,
-                       key_filename=self.keyfile)
+        try:
+            client.connect(self.hostname,
+                           username=self.username,
+                           port=self.port,
+                           key_filename=self.keyfile)
 
-        self.log.debug("SSH command:\n%s" % command)
-        stdin, stdout, stderr = client.exec_command(command)
+            self.log.debug("SSH command:\n%s" % command)
+            stdin, stdout, stderr = client.exec_command(command)
+        finally:
+            client.close()
 
         out = stdout.read()
         self.log.debug("SSH received stdout:\n%s" % out)
@@ -377,4 +380,4 @@ class Gerrit(object):
         self.log.debug("SSH received stderr:\n%s" % err)
         if ret:
             raise Exception("Gerrit error executing %s" % command)
-        return (out, err)
+        return out, err
